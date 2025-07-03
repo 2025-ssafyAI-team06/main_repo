@@ -57,7 +57,7 @@ def create_llm_chain(system_prompt: str, examples: list = None, user_query: str 
     # 사용자 쿼리가 있는 경우 추가
     if user_query:
         messages.append(("human", user_query))
-    
+    print(messages)
     prompt = ChatPromptTemplate.from_messages(messages)
     llm = ChatUpstage(model="solar-pro")
     

@@ -68,32 +68,32 @@ app.add_middleware(
 class MessageRequest(BaseModel):
     message: str
     
-rules_retriever = None
-rules_rag_chain = None
+rules_retriever = load_retriever()
+rules_rag_chain = build_rag_chain()
 
-jinxes_retriever = None
-jinxes_rag_chain = None
+jinxes_retriever = load_jinxes_retriever()
+jinxes_rag_chain = build_jinxes_rag_chain()
 
-@app.on_event("startup")
-async def startup_event():
-    # retriever 초기화는 별도 스레드에서 수행
-    threading.Thread(target=init_vector_store).start()
+# @app.on_event("startup")
+# async def startup_event():
+#     # retriever 초기화는 별도 스레드에서 수행
+#     threading.Thread(target=init_vector_store).start()
 
-def init_vector_store():
-    global rules_retriever, rules_rag_chain, jinxes_retriever, jinxes_rag_chain
-    try:
-        save_to_chroma(chunking_data())
-        run_rules_embedding()
-        load_jinxes_embedding(load_wikipedia_docs(), load_namuwiki_docs())
+# def init_vector_store():
+#     global rules_retriever, rules_rag_chain, jinxes_retriever, jinxes_rag_chain
+#     try:
+#         save_to_chroma(chunking_data())
+#         run_rules_embedding()
+#         load_jinxes_embedding(load_wikipedia_docs(), load_namuwiki_docs())
         
-        rules_retriever = load_retriever()
-        rules_rag_chain = build_rag_chain()
+#         rules_retriever = load_retriever()
+#         rules_rag_chain = build_rag_chain()
 
-        jinxes_retriever = load_jinxes_retriever()
-        jinxes_rag_chain = build_jinxes_rag_chain()
-        print("✅ Retriever initialized in background")
-    except Exception as e:
-        print("❌ Retriever initialization failed:", e)
+#         jinxes_retriever = load_jinxes_retriever()
+#         jinxes_rag_chain = build_jinxes_rag_chain()
+#         print("✅ Retriever initialized in background")
+#     except Exception as e:
+#         print("❌ Retriever initialization failed:", e)
 
 
 def create_next_query(category,user_query):

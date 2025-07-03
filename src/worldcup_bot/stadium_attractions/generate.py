@@ -216,7 +216,7 @@ def run_spot_pipeline(user_question):
                 responses = []
 
                 for doc in selected_docs:
-                    raw_response = generate_recommendation_response(doc, user_question)
+                    raw_response = generate_recommendation_response(doc, user_question,"없음")
                     response = raw_response.strip("```")
                     responses.append(response)
 
@@ -237,4 +237,5 @@ def run_spot_pipeline(user_question):
                 else:
                     print("해당 경기장 근처 관광지에 대한 내용이 업데이트 되지 않았습니다.")
                     return "해당 경기장 근처 관광지에 대한 내용이 업데이트 되지 않았습니다."
+    return "죄송합니다. 해당 정보에 대해서 찾을 수 없습니다."
 

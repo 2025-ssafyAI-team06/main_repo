@@ -2,24 +2,22 @@
 """
 월드컵 데이터 분석 시스템 메인 실행 파이프라인
 """
-
-from utils import (
-    set_api_key,
+from src.util.utils import (
     print_pipeline_step
-)
-from services import (
-    classify_query_category
 )
 
 import os
 import sys
 import asyncio
-
+import chromadb
 # 현재 파일(main.py)의 위치를 기준으로 src 경로 추가
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.join(BASE_DIR, "src")
 sys.path.append(SRC_DIR)
+from chromadb.config import Settings
 
+settings = Settings(anonymized_telemetry=False)
+client = chromadb.Client(settings)
 import threading
 
 from pydantic import BaseModel
@@ -49,6 +47,14 @@ from worldcup_bot.jinxes_and_incidents.generate import run_jinxes_and_incidents_
 
 from worldcup_bot.formations_and_tactics.generate import run_formations_and_tactics_pipeline
 
+from prompts import (
+    CATEGORY_CLASSIFICATION_SYSTEM_PROMPT,
+    CATEGORY_CLASSIFICATION_EXAMPLES
+)
+from src.util.utils import (
+    create_llm_chain
+)
+
 import os
 
 
@@ -75,28 +81,6 @@ rules_rag_chain = build_rag_chain()
 jinxes_retriever = load_jinxes_retriever()
 jinxes_rag_chain = build_jinxes_rag_chain()
 
-# @app.on_event("startup")
-# async def startup_event():
-#     # retriever 초기화는 별도 스레드에서 수행
-#     threading.Thread(target=init_vector_store).start()
-
-# def init_vector_store():
-#     global rules_retriever, rules_rag_chain, jinxes_retriever, jinxes_rag_chain
-#     try:
-#         save_to_chroma(chunking_data())
-#         run_rules_embedding()
-#         load_jinxes_embedding(load_wikipedia_docs(), load_namuwiki_docs())
-        
-#         rules_retriever = load_retriever()
-#         rules_rag_chain = build_rag_chain()
-
-#         jinxes_retriever = load_jinxes_retriever()
-#         jinxes_rag_chain = build_jinxes_rag_chain()
-#         print("✅ Retriever initialized in background")
-#     except Exception as e:
-#         print("❌ Retriever initialization failed:", e)
-
-
 def create_next_query(category,user_query):
     print("category : ",category)
     if category == "1":
@@ -107,13 +91,13 @@ def create_next_query(category,user_query):
       return run_rules_pipeline(user_query, rules_retriever, rules_rag_chain)
     elif category == "3":
       print("유형3")
-      return run_worldcup_analysis_pipeline(user_query,"./matches_1930_2022.csv")
+      return run_worldcup_analysis_pipeline(user_query)
     elif category == "4":
       print("유형4")
       return run_jinxes_and_incidents_pipeline(user_query, jinxes_retriever, jinxes_rag_chain)
     elif category == "5":
       print("유형5")
-      return run_formations_and_tactics_pipeline(user_query, "./formation_per_nation.csv")  
+      return run_formations_and_tactics_pipeline(user_query)
     else:
         return "죄송합니다. 질문을 이해하지 못했습니다."
 
@@ -125,25 +109,30 @@ async def chat(req: MessageRequest):
     
     return await asyncio.to_thread(create_next_query, category, req.message)
 
-# def main():
-#     """메인 실행 함수"""
-#     # API 키 설정
-#     set_api_key()
-    
-#     # 예시 실행
-#     user_query = input("질문을 입력하세요: ")
-#     # csv_path = "./matches_1930_2022.csv"
 
-#     category = classify_query_category(user_query)
-#     print_pipeline_step("📂 분류된 카테고리:", category)
-
-#     result = create_next_query(category,user_query)
-    
-#     return result
-  
 @app.get("/")
 async def root():
     return {"status": "ok"}
+
+def classify_query_category(user_query: str) -> str:
+    """
+    사용자 질문을 카테고리로 분류
+    
+    Args:
+        user_query (str): 사용자 질문
+        
+    Returns:
+        str: 분류된 카테고리 번호
+    """
+    chain = create_llm_chain(
+        system_prompt=CATEGORY_CLASSIFICATION_SYSTEM_PROMPT,
+        examples=CATEGORY_CLASSIFICATION_EXAMPLES,
+        user_query=user_query
+    )
+
+    category = chain.invoke({})
+    print("category: ", category)
+    return category.strip()
 
 if __name__ == "__main__":
     import uvicorn

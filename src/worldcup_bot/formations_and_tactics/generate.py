@@ -9,11 +9,6 @@ llm = ChatUpstage(model="solar-pro")
 
 from util.dbutils import *
 
-def load_formation_data(csv_path: str) -> pd.DataFrame:
-    """CSV 파일로부터 포메이션 데이터 로드"""
-    return pd.read_csv(csv_path)
-
-
 def build_sql_generation_prompt(user_query: str) -> ChatPromptTemplate:
     """SQL 생성을 위한 ChatPromptTemplate 구성"""
     schema_description = """
@@ -47,7 +42,7 @@ def build_sql_generation_prompt(user_query: str) -> ChatPromptTemplate:
         ("human", "일본의 축구 전략이 궁금해"),
         ("ai", "SELECT * FROM formation_per_nation WHERE country_iso3 = 'JPN'"),
         ("human", "4-2-3-1 포메이션의 장점이 궁금해"),
-        ("ai", "SELECT * FROM formation_per_nation WHERE most_used_formation = '4-2-3-1' limit 5"),
+        ("ai", "SELECT * FROM formation_per_nation WHERE most_used_formation = '4-2-3-1' limit 1"),
         ("human", user_query),
     ])
 
@@ -57,10 +52,6 @@ def generate_sql(prompt: ChatPromptTemplate) -> str:
     chain = prompt | llm | StrOutputParser()
     return chain.invoke({}).strip()
 
-
-def execute_sql_query(df: pd.DataFrame, sql_query: str) -> pd.DataFrame:
-    """pandasql을 통해 SQL 실행"""
-    return ps.sqldf(sql_query, {'df': df})
 
 
 def generate_natural_response(user_query: str, df_result: pd.DataFrame) -> str:
@@ -77,12 +68,11 @@ def generate_natural_response(user_query: str, df_result: pd.DataFrame) -> str:
     return chain.invoke({})
 
 
-def run_formations_and_tactics_pipeline(user_query: str, csv_path: str) -> str:
+def run_formations_and_tactics_pipeline(user_query: str) -> str:
     """전체 파이프라인 실행 함수"""
-    # 1. 데이터 로드
-    # df = load_formation_data(csv_path)
 
-    # 2. SQL 생성 프롬프트 구성
+
+    # 1. SQL 생성 프롬프트 구성
     prompt = build_sql_generation_prompt(user_query)
 
     # 3. SQL 생성

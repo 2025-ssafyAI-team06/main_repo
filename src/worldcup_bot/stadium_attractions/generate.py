@@ -183,8 +183,10 @@ def run_spot_pipeline(user_question):
             raw_response = generate_location_response(search_result, response, user_question)
             ai_answer = raw_response.strip("```")
             print(ai_answer)
+            return ai_answer
         else:
             print("죄송합니다. 다른 관광지에 대해서 물어봐주세요.")
+            return "죄송합니다. 다른 관광지에 대해서 물어봐주세요."
 
 
     elif response["intent"] == 2:
@@ -221,6 +223,7 @@ def run_spot_pipeline(user_question):
                 # 답변 생성하기
                 ai_answer = "\n\n".join(responses)
                 print(ai_answer)
+                return ai_answer
             
             # 정확한 답변이 걸러지지 않았다면
             else:
@@ -230,6 +233,8 @@ def run_spot_pipeline(user_question):
                     # 답변 생성하기
                     response = raw_response.strip("```")
                     print(response)
+                    return response
                 else:
                     print("해당 경기장 근처 관광지에 대한 내용이 업데이트 되지 않았습니다.")
+                    return "해당 경기장 근처 관광지에 대한 내용이 업데이트 되지 않았습니다."
 

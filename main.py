@@ -13,6 +13,7 @@ from services import (
 
 import os
 import sys
+import asyncio
 
 # 현재 파일(main.py)의 위치를 기준으로 src 경로 추가
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -122,7 +123,7 @@ async def chat(req: MessageRequest):
     category = classify_query_category(req.message)
     print_pipeline_step("📂 분류된 카테고리:", category)
     
-    return create_next_query(category, req.message)
+    return await asyncio.to_thread(create_next_query, category, req.message)
 
 # def main():
 #     """메인 실행 함수"""

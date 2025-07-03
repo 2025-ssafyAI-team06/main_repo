@@ -11,7 +11,8 @@ from prompts import (
     SQL_GENERATION_SYSTEM_PROMPT_TEMPLATE,
     SQL_GENERATION_EXAMPLES,
     FINAL_ANSWER_SYSTEM_PROMPT,
-    FINAL_ANSWER_PROMPT_TEMPLATE
+    FINAL_ANSWER_PROMPT_TEMPLATE,
+    RDB_DATA_FRAME_SOCCER_RECORD
 )
 from utils import (
     get_schema_description,
@@ -21,6 +22,8 @@ from utils import (
     print_pipeline_step,
     run_sql_query
 )
+
+from util.dbutils import *
 
 def is_supported_category(category: str) -> bool:
     """
@@ -34,9 +37,9 @@ def is_supported_category(category: str) -> bool:
     """
     return category == "3"
 
-def generate_sql_from_query(user_query: str, df: pd.DataFrame) -> str:
+def generate_sql_from_query(user_query: str) -> str:
     """사용자 질문과 DataFrame 스키마를 기반으로 SQL 쿼리 생성"""
-    schema_description = get_schema_description(df)
+    schema_description = RDB_DATA_FRAME_SOCCER_RECORD
     system_prompt = SQL_GENERATION_SYSTEM_PROMPT_TEMPLATE.format(
         schema_description=schema_description
     )
@@ -48,6 +51,7 @@ def generate_sql_from_query(user_query: str, df: pd.DataFrame) -> str:
     )
 
     sql_result = chain.invoke({})
+    print("==============="+sql_result+"===============")
     return sql_result.strip()
 
 
@@ -79,20 +83,26 @@ def run_worldcup_analysis_pipeline(user_query: str, csv_path: str) -> str:
     Returns:
         str: 최종 응답 또는 None
     """
-    # 1. CSV 데이터 로드
-    df = load_csv_data(csv_path)
+    # # 1. CSV 데이터 로드
+    # df = load_csv_data(csv_path)
     
-    # 2. SQL 쿼리 생성
-    sql_query = generate_sql_from_query(user_query, df)
-    print_pipeline_step("📄 생성된 SQL:", f"\n{sql_query}")
+    # # 2. SQL 쿼리 생성
+    sql_query = generate_sql_from_query(user_query)
+    # print_pipeline_step("📄 생성된 SQL:", f"\n{sql_query}")
     
-    # 3. SQL 실행
-    df_result = run_sql_query(sql_query, df)
-    print_pipeline_step("📊 SQL 실행 결과:", f"\n{df_result}")
+    # # 3. SQL 실행
+    # df_result = run_sql_query(sql_query, df)
+    # print_pipeline_step("📊 SQL 실행 결과:", f"\n{df_result}")
     
     # 4. 최종 자연어 응답 생성
+
+    
+    df_result = getCountryStaticSQLResult(sql_query)
+    
+
     sql_result_str = format_dataframe_result(df_result)
     final_answer = generate_natural_answer(user_query, sql_result_str)
     print_pipeline_step("🗣️ 최종 응답:", f"\n{final_answer}")
     
     return final_answer
+

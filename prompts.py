@@ -34,6 +34,8 @@ SQL_GENERATION_SYSTEM_PROMPT_TEMPLATE = """
 
 DuckDB에서 실행할 수 있는 SELECT 쿼리를 생성해주세요.
 SQL 외에는 아무것도 출력하지 마세요.
+
+'home_team_iso3', 'away_team_iso3' 필드는 표준화된 국제 코드 ISO3로 구성되어있습니다. 따라서 국가에 관련된 정보를 찾기 위해서는 해당 필드를 기준으로 SQL을 작성해야 합니다.
 """
 
 # SQL 생성용 Few-shot 예시
@@ -42,14 +44,14 @@ SQL_GENERATION_EXAMPLES = [
         "2022년에 열린 경기에서 잉글랜드가 넣은 골이 몇 개인지 알려주세요.",
         """SELECT SUM(goals) as england_total_goals_2022
 FROM (
-    SELECT home_score as goals FROM df WHERE Year = 2022 AND home_team = 'England'
+    SELECT home_score as goals FROM soccer_record WHERE Year = 2022 AND home_team_iso3 = 'ENG'
     UNION ALL
-    SELECT away_score as goals FROM df WHERE Year = 2022 AND away_team = 'England'
+    SELECT away_score as goals FROM soccer_record WHERE Year = 2022 AND home_team_iso3 = 'ENG'
 )"""
     ),
     (
         "2014년 월드컵 결승전에 참석한 심판의 이름은?",
-        "SELECT DISTINCT Referee FROM df WHERE Round = 'Final' AND Year = 2014"
+        "SELECT DISTINCT Referee FROM soccer_record WHERE Round = 'Final' AND Year = 2014"
     ),
 ]
 
@@ -71,3 +73,52 @@ CATEGORY_MESSAGES = {
     "unsupported": "⚠️ 현재는 참가 국가별 기록(카테고리 3)만 처리 가능합니다.",
     "api_key_success": "✅ API key has been set successfully.",
 }
+
+RDB_DATA_FRAME_SOCCER_RECORD = """
+- home_team: object
+- away_team: object
+- home_score: int64
+- home_xg: float64
+- home_penalty: float64
+- away_score: int64
+- away_xg: float64
+- away_penalty: float64
+- home_manager: object
+- home_captain: object
+- away_manager: object
+- away_captain: object
+- attendance: int64
+- venue: object
+- officials: object
+- round: object
+- date: object
+- score: object
+- referee: object
+- notes: object
+- host: object
+- year: int64
+- home_goal: object
+- away_goal: object
+- home_goal_long: object
+- away_goal_long: object
+- home_own_goal: object
+- away_own_goal: object
+- home_penalty_goal: object
+- away_penalty_goal: object
+- home_penalty_miss_long: object
+- away_penalty_miss_long: object
+- home_penalty_shootout_goal_long: object
+- away_penalty_shootout_goal_long: object
+- home_penalty_shootout_miss_long: object
+- away_penalty_shootout_miss_long: object
+- home_red_card: object
+- away_red_card: object
+- home_yellow_red_card: object
+- away_yellow_red_card: object
+- home_yellow_card_long: object
+- away_yellow_card_long: object
+- home_substitute_in_long: object
+- away_substitute_in_long: object
+- home_team_iso3: object
+- away_team_iso3: object
+"""

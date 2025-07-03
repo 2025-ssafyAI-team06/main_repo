@@ -7,15 +7,27 @@ import pandasql as ps
 # 글로벌 설정
 llm = ChatUpstage(model="solar-pro")
 
+from util.dbutils import *
 
 def load_formation_data(csv_path: str) -> pd.DataFrame:
     """CSV 파일로부터 포메이션 데이터 로드"""
     return pd.read_csv(csv_path)
 
 
-def build_sql_generation_prompt(user_query: str, df: pd.DataFrame) -> ChatPromptTemplate:
+def build_sql_generation_prompt(user_query: str) -> ChatPromptTemplate:
     """SQL 생성을 위한 ChatPromptTemplate 구성"""
-    schema_description = "\n".join([f"- {col}: {df[col].dtype}" for col in df.columns])
+    schema_description = """
+- nation_name: object
+- number_of_preliminaries_matches: int64
+- most_used_formation: object
+- most_used_formation_count: int64
+- formations_variety: int64
+- list_of_formations_used_during_the_preliminaries_stage: object
+- confederations: object
+- formation_advantages: object
+- formation_weaknesses: object
+- country_iso3: object
+"""
     system_prompt = f"""
         당신은 사용자의 질문과 테이블 스키마를 기반으로 SQL 쿼리를 생성하는 도우미입니다.
         아래는 테이블의 스키마 설명입니다:
@@ -31,11 +43,11 @@ def build_sql_generation_prompt(user_query: str, df: pd.DataFrame) -> ChatPrompt
     return ChatPromptTemplate.from_messages([
         ("system", system_prompt),
         ("human", "한국의 포메이션 전략에 대해서 알려주세요."),
-        ("ai", "SELECT * FROM df WHERE country_iso3 = 'KOR'"),
+        ("ai", "SELECT * FROM formation_per_nation WHERE country_iso3 = 'KOR'"),
         ("human", "일본의 축구 전략이 궁금해"),
-        ("ai", "SELECT * FROM df WHERE country_iso3 = 'JPN'"),
+        ("ai", "SELECT * FROM formation_per_nation WHERE country_iso3 = 'JPN'"),
         ("human", "4-2-3-1 포메이션의 장점이 궁금해"),
-        ("ai", "SELECT * FROM df WHERE most_used_formation = '4-2-3-1'"),
+        ("ai", "SELECT * FROM formation_per_nation WHERE most_used_formation = '4-2-3-1' limit 5"),
         ("human", user_query),
     ])
 
@@ -68,17 +80,17 @@ def generate_natural_response(user_query: str, df_result: pd.DataFrame) -> str:
 def run_formations_and_tactics_pipeline(user_query: str, csv_path: str) -> str:
     """전체 파이프라인 실행 함수"""
     # 1. 데이터 로드
-    df = load_formation_data(csv_path)
+    # df = load_formation_data(csv_path)
 
     # 2. SQL 생성 프롬프트 구성
-    prompt = build_sql_generation_prompt(user_query, df)
+    prompt = build_sql_generation_prompt(user_query)
 
     # 3. SQL 생성
     sql_query = generate_sql(prompt)
     print("📄 생성된 SQL:\n", sql_query)
 
     # 4. SQL 실행
-    result_df = execute_sql_query(df, sql_query)
+    result_df = getCountryStaticSQLResult(sql_query)
     print("📊 SQL 실행 결과:\n", result_df)
 
     # 5. 자연어 응답 생성

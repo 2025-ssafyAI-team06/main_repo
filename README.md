@@ -16,13 +16,29 @@ mkdir certs
 openssl req -x509 -newkey rsa:2048 -nodes -keyout certs/key.pem -out certs/cert.pem -days 365 -subj "//CN=localhost"
 ```
 
-### 2. 벡터 데이터베이스 다운로드
+### 2. 벡터 데이터베이스 및  SQL 다운로드
 
 Chroma 벡터 데이터베이스를 다운로드하여 프로젝트 루트에 배치합니다:
 
 **다운로드 링크:** https://drive.google.com/file/d/1ywS58DBRb6uRHOADY90_YhfZPie0H3lS/view?usp=drive_link
 
 다운로드 후 압축을 해제하여 프로젝트 루트 폴더에 배치하세요.
+
+---
+PostgreSQL 등의 관계형 데이터베이스 초기 설정을 위해 아래 SQL 파일을 다운로드합니다:
+
+**SQL 파일 다운로드 링크:**  
+https://drive.google.com/file/d/1iPpchJEP-YvjEGctyG-bauBizR9zHkZ0/view?usp=sharing
+
+
+---
+
+다운로드한 `.sql` 파일을 원하는 데이터베이스에 import 하여 초기 데이터를 구성할 수 있습니다:
+
+```bash
+psql -U {your_rdb_user} -d {your_rdb_name} -f init_worldcup.sql
+```
+---
 
 ### 3. 환경 변수 설정
 

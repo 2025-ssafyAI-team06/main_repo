@@ -4,6 +4,5 @@ services:
   fastapi:
     build: .
     ports:
-      - "443:443"
-    volumes:
-      - ./certs:/app/certs
+      - "80:80"
+    restart: always
